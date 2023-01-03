@@ -1,5 +1,5 @@
 # Tiger_DB
-Tiger_DB is a Grap-NoSql database for the purposes of scaling and giving the user absolute power over their data. For now it only has the basic CRUD actions and the DFS algorithm
+Tiger_DB is a Graph-NoSql database for the purposes of scaling and giving the user absolute power over their data. For now it only has the basic CRUD actions and the DFS algorithm
 
 # How to use
 
