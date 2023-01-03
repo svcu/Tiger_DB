@@ -48,10 +48,12 @@ impl Entry {
         let mut stack: Vec<String> = Vec::new();
         let mut visited: Vec<String> = Vec::new();
 
+        //Populate stack with neighbors
         for node in self.vertices.iter(){
             stack.push(node.to_string());
         }
 
+        //DFS
         while !stack.is_empty() {
             let actual = stack.pop().unwrap();
             if visited.contains(&actual) {
@@ -67,6 +69,7 @@ impl Entry {
             }
         }
 
+        //Return visited nodes
         visited
         
     }
@@ -94,10 +97,13 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
         let key = &converted_data["key"];
         let mut entry: Entry = from_str(&converted_data["entry"].to_string()).unwrap();
 
-
+        //Insert entry in map
         _ = map.insert(key.to_string(),  entry);
 
+
+       //Write map into db.json
        write(&map); 
+
 
        _ = stream.write(String::from("OK").as_bytes());
  
@@ -202,14 +208,16 @@ fn main() {
                 let mut reader = BufReader::new(&stream);
                 let mut msg: String = String::new();
     
+
+                //Get data from socket
                 _ = reader.read_line(&mut msg);
     
                 
-    
+                //Close connection
                 if msg.trim()=="close" {
                     break;
                 }
-                    println!("{}", msg);
+                    //Handle connection
                     handle_conn(msg, &mut json_map, &mut  stream)
                 
             }
