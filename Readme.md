@@ -11,7 +11,7 @@ You can also use it with raw sockets:
 - Send a message as a string with the following structure
 ```
 {
-    instruction : "insert" | "update" | "get" | "delete" | "dfs",
+    instruction : "insert" | "update" | "get" | "delete" | "dfs" | "bfs",
     key : //THE KEY OF THE ENTRY YOU WANT TO MODIFY,
     // IF YOU WANT TO INSERT entry : {
         entry_type : "ref" | "normal" //REF POINTS TO AN ENTRY,
@@ -33,7 +33,7 @@ You can also use it with raw sockets:
 - [] Adding CLI
 - [] Adding Schemas
 - [] Cryptography
-- [] Add more graph algorithms
+- [x] Add BFS
 - Sugest ideas
 
 # Contribute

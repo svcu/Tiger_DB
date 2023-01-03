@@ -1,4 +1,4 @@
-use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write}, collections::HashMap, fs::{File, self}};
+use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write}, collections::{HashMap, VecDeque}, fs::{File, self}};
 use serde_derive::{Deserialize, Serialize};
 
 
@@ -66,6 +66,37 @@ impl Entry {
 
             for node in curr_entry.get_vertices(){
                 stack.push(node)
+            }
+        }
+
+        //Return visited nodes
+        visited
+        
+    }
+
+    fn bfs(&self, map: &HashMap<String, Entry>) -> Vec<String>{
+        
+        let mut stack: VecDeque<String> = VecDeque::new();
+        let mut visited: Vec<String> = Vec::new();
+
+        //Populate stack with neighbors
+        for node in self.vertices.iter(){
+            stack.push_back(node.to_string());
+        }
+
+        //DFS
+        while !stack.is_empty() {
+            let actual = stack.pop_front().unwrap();
+            if visited.contains(&actual) {
+                continue;
+            }
+
+            visited.push(actual.clone());
+
+            let curr_entry = map.get(&actual).unwrap().clone();
+
+            for node in curr_entry.get_vertices(){
+                stack.push_back(node)
             }
         }
 
@@ -168,6 +199,14 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
 
         
        _ = stream.write(String::from("OK").as_bytes());
+     }else if instruction == "bfs"{
+        let key = &converted_data["key"].to_string();
+        let entry = map.get(key).unwrap();
+
+        let bfs = entry.bfs;
+
+        _ = stream.write(to_string(bfs).as_bytes());
+         
      }
      
 
