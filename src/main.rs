@@ -1,12 +1,12 @@
-use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write}, collections::HashMap, hash::Hash, fs::{File, self}, fmt::Error};
+use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write}, collections::HashMap, fs::{File, self}};
 use serde_derive::{Deserialize, Serialize};
 
 
-use serde_json::{Value, from_str, to_string, Error};
+
+use serde_json::{Value, from_str, to_string};
 
 
 #[derive(Deserialize, Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 struct Entry{
     entry_type: String,
     schema: String,
@@ -15,34 +15,38 @@ struct Entry{
 }
 
 impl Entry {
-    fn getType(&self) -> String{
+
+    fn get_type(&self) -> String{
         self.entry_type.clone()
     }
 
-    fn getRef(&self, map: &HashMap<String, Entry>) -> Option<&Entry>{
+     /*fn getRef (&self, map: &HashMap<String, Entry>) -> Option<&Entry>{
         if self.entry_type != "ref"{
             return  None;
         }else{
-            return Some(map.get(&self.schema).unwrap());
+            let entry = map.get(&self.schema).unwrap();
+            return Some(entry);
         }
+    }*/
+
+    fn get_schema(&self) -> String{
+        self.schema.clone()
     }
 
-    fn getSchema(&self) -> String{
-        self.schema
+    fn get_data(&self) -> Value{
+        self.data.clone()
     }
 
-    fn getData(&self) -> Value{
-        self.data
+    fn get_vertices(&self) -> Vec<String>{
+        self.vertices.clone()
     }
 
-    fn getVertices(&self) -> Vec<String>{
-        self.vertices
-    }
 
+    //O(V+E)
     fn dfs(&self, map: &HashMap<String, Entry>) -> Vec<String>{
         
-        let stack: Vec<String> = Vec::new();
-        let visited: Vec<String> = Vec::new();
+        let mut stack: Vec<String> = Vec::new();
+        let mut visited: Vec<String> = Vec::new();
 
         for node in self.vertices.iter(){
             stack.push(node.to_string());
@@ -54,17 +58,27 @@ impl Entry {
                 continue;
             }
 
-            visited.push(actual);
+            visited.push(actual.clone());
 
             let curr_entry = map.get(&actual).unwrap().clone();
 
-            for node in curr_entry.getVertices(){
+            for node in curr_entry.get_vertices(){
                 stack.push(node)
             }
         }
 
         visited
         
+    }
+
+    fn add_vertex(&mut self, vertex: &String){
+        self.vertices.push(vertex.clone());
+    }
+
+    fn update(&mut self, property: &String, value: &Value){
+        let mut h_map: serde_json::Map<String, Value> = serde_json::Map::new();
+        h_map.insert(property.clone(), value.clone());
+        self.data.get_mut(property).unwrap().as_object_mut().replace(&mut h_map);
     }
 
 
@@ -80,15 +94,13 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
         let key = &converted_data["key"];
         let mut entry: Entry = from_str(&converted_data["entry"].to_string()).unwrap();
 
-        let res = map.insert(key.to_string(),  entry);
 
-        if res.is_some() {
-            write(&map);
+        _ = map.insert(key.to_string(),  entry);
 
-            _ = stream.write(String::from("OK").as_bytes());
-        }else{
-            _ = stream.write(String::from("Error").as_bytes());
-        }
+       write(&map); 
+
+       _ = stream.write(String::from("OK").as_bytes());
+ 
 
     } else if instruction == "get"{
         let key = &converted_data["key"];
@@ -122,7 +134,35 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
         }
 
 
-    }
+    }else if instruction=="add_vertex"{
+        let key = &converted_data["key"].to_string();
+        let vertex = &converted_data["vertex"].to_string();
+
+        let entry = map.get_mut(key).unwrap();
+
+        entry.add_vertex(vertex);
+
+        
+       _ = stream.write(String::from("OK").as_bytes());
+    }else if instruction=="update"{
+        let key = &converted_data["key"].to_string();
+        let property = &converted_data["property"].to_string();
+        let mut new_value = &converted_data["new_value"];
+
+        let mut entry = map.get_mut(key).unwrap();
+
+        _ = entry.update(property, new_value);
+
+        
+       _ = stream.write(String::from("OK").as_bytes());
+     }else if instruction == "delete"{
+        let key = &converted_data["key"].to_string();
+
+        _ = map.remove(key);
+
+        
+       _ = stream.write(String::from("OK").as_bytes());
+     }
      
 
 }
@@ -139,9 +179,10 @@ fn main() {
 
     if db.is_err() {
         _ = File::create("./db.json").unwrap();
+        _ = fs::write("./db.json", "{}");
         let db = fs::read_to_string("./db.json").unwrap();
+        
         json_map = from_str(&db).unwrap();
-        _ = fs::write("./db.json", "{}")
     }else{
         json_map = from_str(&db.unwrap()).unwrap();
     }
@@ -152,20 +193,27 @@ fn main() {
     loop{
         for stream in server.incoming(){
 
-     
             let mut stream = stream.unwrap();
+            
+            loop{
+                
        
 
-            let mut reader = BufReader::new(&stream);
-            let mut msg: String = String::new();
-
-            _ = reader.read_line(&mut msg);
-
-            if msg=="close" {
-                break;
+                let mut reader = BufReader::new(&stream);
+                let mut msg: String = String::new();
+    
+                _ = reader.read_line(&mut msg);
+    
+                
+    
+                if msg.trim()=="close" {
+                    break;
+                }
+                    println!("{}", msg);
+                    handle_conn(msg, &mut json_map, &mut  stream)
+                
             }
-
-            handle_conn(msg, &mut json_map, &mut  stream)
+    
         }
     }
 
