@@ -11,7 +11,7 @@ You can also use it with raw sockets:
 - Send a message as a string with the following structure
 ```
 {
-    instruction : "insert" | "update" | "get" | "delete" | "dfs" | "bfs",
+    instruction : "insert" | "update" | "get" | "delete" | "dfs" | "bfs" | "add_vertex"
     key : //THE KEY OF THE ENTRY YOU WANT TO MODIFY,
     // IF YOU WANT TO INSERT entry : {
         entry_type : "ref" | "normal" //REF POINTS TO AN ENTRY,
@@ -20,8 +20,8 @@ You can also use it with raw sockets:
         data: //JSON OBJECT WITH THE DATA YOU WISH
     },
     //IF YOU WANT TO UPDATE property :  "" //PROPERTY YOU WANT TO UPDATE,
-
-    new_value : "" //VALUE YOU WANT TO PUT IN PLACE OF THE PREVIOUS VALUE 
+    new_value : "" //VALUE YOU WANT TO PUT IN PLACE OF THE PREVIOUS VALUE,
+    vertex: "" //IF YOU WANT TO ADD A VERTEX TO THE GRAPH 
 
 }+'\n'
 ```
