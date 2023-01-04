@@ -203,9 +203,9 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
         let key = &converted_data["key"].to_string();
         let entry = map.get(key).unwrap();
 
-        let bfs = entry.bfs;
+        let bfs = entry.bfs(&map);
 
-        _ = stream.write(to_string(bfs).as_bytes());
+        _ = stream.write(to_string(&bfs).unwrap().as_bytes());
          
      }
      
