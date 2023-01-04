@@ -24,20 +24,21 @@ You can also use it with raw sockets:
 {
     instruction : "insert" | "update" | "get" | "delete" | "dfs" | "bfs" | "add_vertex"
     key : //THE KEY OF THE ENTRY YOU WANT TO MODIFY,
-    // IF YOU WANT TO INSERT entry : {
+    entry : { // IF YOU WANT TO INSERT
         entry_type : "ref" | "normal" //REF POINTS TO AN ENTRY,
         schema: "false" | "KEY OF THE ENTRY YOU WANT TO POINT AT",
         vertices: [] //ARRAY WITH NEIGHBORS OF THE ENTRY,
         data: //JSON OBJECT WITH THE DATA YOU WISH
     },
-    //IF YOU WANT TO UPDATE property :  "" //PROPERTY YOU WANT TO UPDATE,
+    property :  "" //IF YOU WANT TO UPDATE: PROPERTY YOU WANT TO UPDATE,
     new_value : "" //VALUE YOU WANT TO PUT IN PLACE OF THE PREVIOUS VALUE,
     vertex: "" //IF YOU WANT TO ADD A VERTEX TO THE GRAPH 
 
 }+'\n'
 ```
+**All instructions must have a breakline at the end**
 
-- Sends a message with the following text 'close\n' and closes the connection to the database
+- Sends a message with the following text 'close\n' and close the connection to the database
 
 # Plans
 
