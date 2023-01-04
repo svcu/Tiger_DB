@@ -3,6 +3,13 @@ Tiger_DB is a Graph-NoSql database for the purposes of scaling and giving the us
 
 # How to use
 
+## Installation
+
+- Download the latest release of tiger db
+- Run the executable
+
+## Drivers
+
 Tiger_DB has a driver for JavaScript: https://github.com/svcu/Tiger_DB-js
 
 You can also use it with raw sockets:
