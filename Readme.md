@@ -8,6 +8,10 @@ Tiger_DB is a Graph-NoSql database for the purposes of scaling and giving the us
 - Download the latest release of tiger db
 - Run the executable
 
+## Building the code
+
+Run:  `cargo build`
+
 ## Drivers
 
 Tiger_DB has a driver for JavaScript: https://github.com/svcu/Tiger_DB-js
