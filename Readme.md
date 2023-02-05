@@ -38,7 +38,6 @@ You can also use it with raw sockets:
 ```
 **All instructions must have a breakline at the end**
 
-- Sends a message with the following text 'close\n' and close the connection to the database
 
 # Plans
 
