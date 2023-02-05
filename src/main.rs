@@ -1,4 +1,4 @@
-use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write}, collections::{HashMap, VecDeque}, fs::{File, self}};
+use std::{ io::{BufReader, BufRead, Write, Read}, collections::{HashMap, VecDeque}, fs::{File, self, read}, net::{TcpListener, TcpStream}};
 use serde_derive::{Deserialize, Serialize};
 
 
@@ -118,13 +118,17 @@ impl Entry {
 
 }
 
-fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpStream){
+fn handle_conn(mut msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpStream){
 
+   // msg = msg.trim().to_string();
     let converted_data: Value = from_str(&msg).unwrap();
 
     let instruction = &converted_data["instruction"];
 
+    println!("{}", instruction);
+
     if instruction == "insert" {
+
         let key = &converted_data["key"];
         let mut entry: Entry = from_str(&converted_data["entry"].to_string()).unwrap();
 
@@ -137,6 +141,7 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
 
 
        _ = stream.write(String::from("OK").as_bytes());
+       _ = stream.shutdown(std::net::Shutdown::Both);
  
 
     } else if instruction == "get"{
@@ -147,8 +152,12 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
 
         if res.is_err(){
             _ = stream.write(String::from("Error").as_bytes());
+            _ = stream.shutdown(std::net::Shutdown::Both);
+ 
         }else{
             _ = stream.write(res.unwrap().as_bytes());
+            _ = stream.shutdown(std::net::Shutdown::Both);
+
         }
 
     } else if instruction == "dfs"{
@@ -161,13 +170,19 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
 
             if neighbors.is_err(){  
                 _ = stream.write(String::from("Error").as_bytes());
+                _ = stream.shutdown(std::net::Shutdown::Both);
+ 
             }else{
-                _ = stream.write(neighbors.unwrap().as_bytes())
+                _ = stream.write(neighbors.unwrap().as_bytes());
+                _ = stream.shutdown(std::net::Shutdown::Both);
+ 
             }
 
             
         }else{
             _ = stream.write(String::from("Error").as_bytes());
+            _ = stream.shutdown(std::net::Shutdown::Both);
+ 
         }
 
 
@@ -181,6 +196,8 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
 
         
        _ = stream.write(String::from("OK").as_bytes());
+       _ = stream.shutdown(std::net::Shutdown::Both);
+ 
     }else if instruction=="update"{
         let key = &converted_data["key"].to_string();
         let property = &converted_data["property"].to_string();
@@ -192,6 +209,8 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
 
         
        _ = stream.write(String::from("OK").as_bytes());
+       _ = stream.shutdown(std::net::Shutdown::Both);
+ 
      }else if instruction == "delete"{
         let key = &converted_data["key"].to_string();
 
@@ -199,6 +218,8 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
 
         
        _ = stream.write(String::from("OK").as_bytes());
+       _ = stream.shutdown(std::net::Shutdown::Both);
+ 
      }else if instruction == "bfs"{
         let key = &converted_data["key"].to_string();
         let entry = map.get(key).unwrap();
@@ -206,6 +227,8 @@ fn handle_conn(msg: String, map: &mut HashMap<String, Entry>, stream: &mut TcpSt
         let bfs = entry.bfs(&map);
 
         _ = stream.write(to_string(&bfs).unwrap().as_bytes());
+        _ = stream.shutdown(std::net::Shutdown::Both);
+ 
          
      }
      
@@ -216,12 +239,24 @@ fn write(map: &HashMap<String, Entry>){
     _ = fs::write("./db.json", to_string(map).unwrap())
 }
 
+fn handle_tcp(mut stream: TcpStream, map: &mut HashMap<String, Entry>){
+
+    
+    let second = stream.try_clone().unwrap();
+    let mut reader = BufReader::new(second);
+    let mut conn = String::new();
+
+    reader.read_line(&mut conn);
+
+    handle_conn(conn.trim().replace("\0", ""), map, &mut stream)
+        
+    
+}
+
 fn main() {
     let server = TcpListener::bind("127.0.0.1:2310").unwrap();
     let mut json_map: HashMap<String, Entry> = HashMap::new();
-
     let db = fs::read_to_string("./db.json");
-
     if db.is_err() {
         _ = File::create("./db.json").unwrap();
         _ = fs::write("./db.json", "{}");
@@ -238,29 +273,13 @@ fn main() {
     loop{
         for stream in server.incoming(){
 
-            let mut stream = stream.unwrap();
+
+                let mut stream = stream.unwrap();
+
+                println!("Connection from: {:?}", stream.peer_addr());
+
+                handle_tcp(stream, &mut json_map);
             
-            loop{
-                
-       
-
-                let mut reader = BufReader::new(&stream);
-                let mut msg: String = String::new();
-    
-
-                //Get data from socket
-                _ = reader.read_line(&mut msg);
-    
-                
-                //Close connection
-                if msg.trim()=="close" {
-                    break;
-                }
-                    //Handle connection
-                    handle_conn(msg, &mut json_map, &mut  stream)
-                
-            }
-    
         }
     }
 
